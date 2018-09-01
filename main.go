@@ -27,7 +27,7 @@ func getKeyList(srv *sheets.Service)  {
 	}
 
 	if len(resp.Values) == 0 {
-		fmt.Println("No data found.")
+		fmt.Println("No data found")
 	} else {
 		for _, row := range resp.Values {
 			fmt.Println(row[0])
@@ -35,10 +35,10 @@ func getKeyList(srv *sheets.Service)  {
 	}
 }
 
-func getRow(srv *sheets.Service, key string) (int, int, interface{}) {
+func getRow(srv *sheets.Service, key string) (int, int, string) {
 	var keyListLen int
 	var rowNum int
-	var rowData interface{}
+	var rowValue string
 	readRange := strings.Replace("'__SHEETNAME__'!A:B", "__SHEETNAME__", sheetName, -1)
 	resp, err := srv.Spreadsheets.Values.Get(sheetId, readRange).Do()
 	if err != nil {
@@ -46,32 +46,35 @@ func getRow(srv *sheets.Service, key string) (int, int, interface{}) {
 	}
 
 	keyListLen = len(resp.Values)
-
 	if keyListLen == 0 {
-		fmt.Println("No data found.")
+		fmt.Println("No data found")
 	} else {
 		for i, row := range resp.Values {
 			if key == row[0] {
+				if len(row) == 1 { // no value
+					rowValue = ""
+				} else {
+					rowValue, _ = row[1].(string)
+				}
 				rowNum = i
-				rowData = row[1]
 				break
 			}
 		}
 	}
-	return keyListLen, rowNum, rowData
+	return keyListLen, rowNum, rowValue
 }
 
 func addRow(srv *sheets.Service, key string, val string) {
 	var targetRowNum int
 
 	// getRow
-	keyListLen, rowNum, rowData := getRow(srv, key)
+	keyListLen, rowNum, _ := getRow(srv, key)
 
 	// set targetRowNum
-	if rowData != nil {
-		targetRowNum = rowNum+ 1
-	} else {
+	if rowNum == 0 {
 		targetRowNum = keyListLen+ 1
+	} else {
+		targetRowNum = rowNum+ 1
 	}
 
 	// updateRange
@@ -159,14 +162,16 @@ func main() {
 				key := c.Args().Get(0)
 
 				srv := getService()
-				_, _, val := getRow(srv, key)
-				if val == nil {
-					return cli.NewExitError("No key found in row A of Spreadsheets", 2)
+				_, rowNum, rowValue := getRow(srv, key)
+				if rowNum == 0 {
+					return cli.NewExitError("Key not found", 2)
+				} else if rowValue == "" {
+					return cli.NewExitError("Value is not set", 3)
 				}
 				if carriageReturn {
-					fmt.Println(val)
+					fmt.Println(rowValue)
 				} else {
-					fmt.Print(val)
+					fmt.Print(rowValue)
 				}
 				return nil
 			},
