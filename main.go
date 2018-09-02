@@ -122,7 +122,7 @@ func getService() *sheets.Service {
 func main() {
 	app := cli.NewApp()
 	app.Name = "sheetskv"
-	app.Usage = "This command manages Google Spreadsheets' A column as Key and B column as value"
+	app.Usage = "sheetskv is a CLI tool for using Google Spreadsheets as the Key Value Store"
 	app.Version = "0.1.0"
 	app.Author = "frudens Inc. <https://frudens.com>"
 
