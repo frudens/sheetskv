@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/frudens/sheetskv/token"
 	"fmt"
 	"github.com/urfave/cli"
-	"gitlab.com/teruhirokomaki/sheetskv/token"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/sheets/v4"
 	"io/ioutil"
@@ -18,7 +18,7 @@ var sheetId string
 var sheetName string
 var carriageReturn bool
 
-func getKeyList(srv *sheets.Service)  {
+func getKeyList(srv *sheets.Service) {
 	readRange := strings.Replace("'__SHEETNAME__'!A:A", "__SHEETNAME__", sheetName, -1)
 
 	resp, err := srv.Spreadsheets.Values.Get(sheetId, readRange).Do()
@@ -72,9 +72,9 @@ func addRow(srv *sheets.Service, key string, val string) {
 
 	// set targetRowNum
 	if rowNum == 0 {
-		targetRowNum = keyListLen+ 1
+		targetRowNum = keyListLen + 1
 	} else {
-		targetRowNum = rowNum+ 1
+		targetRowNum = rowNum + 1
 	}
 
 	// updateRange
@@ -127,15 +127,15 @@ func main() {
 	app.Author = "frudens Inc. <https://frudens.com>"
 
 	// global option
-	app.Flags = []cli.Flag {
+	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name: "sheetId, i",
-			Usage: "Google Spreadsheets id",
+			Name:        "sheetId, i",
+			Usage:       "Google Spreadsheets id",
 			Destination: &sheetId,
 		},
 		cli.StringFlag{
-			Name: "sheetName, n",
-			Usage: "Sheet name of Google Spreadsheets",
+			Name:        "sheetName, n",
+			Usage:       "Sheet name of Google Spreadsheets",
 			Destination: &sheetName,
 		},
 	}
@@ -145,7 +145,7 @@ func main() {
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "List contents of column A of Spreadsheets",
-			Action:  func(c *cli.Context) error {
+			Action: func(c *cli.Context) error {
 				srv := getService()
 				getKeyList(srv)
 				return nil
@@ -155,8 +155,8 @@ func main() {
 			Name:    "get",
 			Aliases: []string{"g"},
 			Usage:   "If the key matches the Spreadsheets' A column, display the contents of column B",
-			Action:  func(c *cli.Context) error {
-				if c.NArg() == 0  {
+			Action: func(c *cli.Context) error {
+				if c.NArg() == 0 {
 					return cli.NewExitError("Key required for argument", 1)
 				}
 				key := c.Args().Get(0)
@@ -177,10 +177,10 @@ func main() {
 			},
 
 			// get command option
-			Flags: []cli.Flag {
+			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "carriageReturn, cr",
-					Usage: "Line break at standard output",
+					Name:        "carriageReturn, cr",
+					Usage:       "Line break at standard output",
 					Destination: &carriageReturn,
 				},
 			},
@@ -189,7 +189,7 @@ func main() {
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "If the key matches the Spreadsheets' A column, update the contents of column B, and if it does not match, add it",
-			Action:  func(c *cli.Context) error {
+			Action: func(c *cli.Context) error {
 				if len(c.Args()) < 2 {
 					return cli.NewExitError("Key and value are required as arguments", 1)
 				}
