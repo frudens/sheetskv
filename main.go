@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/frudens/sheetskv/token"
 	"fmt"
+	"github.com/frudens/sheetskv/lib"
 	"github.com/urfave/cli"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/sheets/v4"
@@ -30,7 +30,11 @@ func getKeyList(srv *sheets.Service) {
 		fmt.Println("No data found")
 	} else {
 		for _, row := range resp.Values {
-			fmt.Println(row[0])
+			if len(row) == 0 {
+				// key is null
+			} else {
+				fmt.Println(row[0])
+			}
 		}
 	}
 }
@@ -56,7 +60,7 @@ func getRow(srv *sheets.Service, key string) (int, int, string) {
 				} else {
 					rowValue, _ = row[1].(string)
 				}
-				rowNum = i
+				rowNum = i + 1
 				break
 			}
 		}
@@ -74,7 +78,7 @@ func addRow(srv *sheets.Service, key string, val string) {
 	if rowNum == 0 {
 		targetRowNum = keyListLen + 1
 	} else {
-		targetRowNum = rowNum + 1
+		targetRowNum = rowNum
 	}
 
 	// updateRange
@@ -82,6 +86,10 @@ func addRow(srv *sheets.Service, key string, val string) {
 	r := strings.NewReplacer("__SHEETNAME__", sheetName, "__ROWNUM__", strconv.Itoa(targetRowNum))
 	updateRange := r.Replace(updateRangeTemp)
 
+	// If the first character of the value is =
+	if val[0:1] == "=" {
+		val = "'" + val
+	}
 	// valueRange
 	var row []interface{}
 	row = append(row, key)
@@ -100,17 +108,17 @@ func addRow(srv *sheets.Service, key string, val string) {
 }
 
 func getService() *sheets.Service {
-	b, err := ioutil.ReadFile(token.GetCredentialsDir())
+	b, err := ioutil.ReadFile(lib.GetCredentialsDir())
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
 
-	// If modifying these scopes, delete your previously saved token.json.
+	// If modifying these scopes, delete your previously saved lib.json.
 	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	client := token.GetClient(config)
+	client := lib.GetClient(config)
 
 	srv, err := sheets.New(client)
 	if err != nil {
